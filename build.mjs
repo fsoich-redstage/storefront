@@ -1,7 +1,6 @@
 import { overrideGQLOperations } from '@dropins/build-tools/gql-extend.js';
 
 overrideGQLOperations([
-  // ACCS does not have Downloadable Items
   {
     npm: '@dropins/storefront-cart',
     skipFragments: ['DOWNLOADABLE_CART_ITEMS_FRAGMENT'],
@@ -43,22 +42,30 @@ overrideGQLOperations([
             }
           }
         }
+        shipping_addresses {
+          selected_shipping_method {
+            carrier_code
+            method_code
+            carrier_title
+            method_title
+            amount {
+              value
+              currency
+            }
+          }
+          available_shipping_methods {
+            carrier_code
+            method_code
+            carrier_title
+            method_title
+            amount {
+              value
+              currency
+            }
+          }
+        }
       }
-      `,
+      `
     ],
   },
-  // {
-  //   npm: '@dropins/storefront-checkout',
-  //   operations: [],
-  // },
-  // {
-  //   npm: '@dropins/storefront-pdp',
-  //   operations: [
-  //     `
-  //     fragment PRODUCT_FRAGMENT on ProductView {
-  //       lowStock
-  //     }
-  //     `,
-  //   ],
-  // },
 ]);
