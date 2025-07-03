@@ -5,52 +5,49 @@ import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 import { events } from '@dropins/tools/event-bus.js';
 
-console.log('[checkout.js] 🚀 Iniciando Drop-in de Checkout... ***');
-
-const handleCheckoutInitialized = ({ data }) => {
-  console.log('[checkout.js] ✅ Checkout inicializado:', data, '***');
-};
-
-const handleCartData = ({ data }) => {
-  console.log('[checkout.js] 🛒 Cart data recibido:', data, '***');
-  console.log('[checkout.js] 💳 Métodos de pago:', data?.available_payment_methods, '***');
-  console.log('[checkout.js] 🚚 Métodos de envío:', data?.available_shipping_methods, '***');
-};
-
 await initializeDropin(async () => {
-  console.log('[checkout.js] ⚙️ Dentro de initializeDropin ***');
+  console.log('[checkout.js] 🚀 Iniciando Drop-in XXX');
 
+  // Paso 2: Setear headers para GraphQL
   setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('checkout') }));
-  console.log('[checkout.js] ✅ Headers GraphQL seteados ***');
+  console.log('[checkout.js] 🧾 Headers GraphQL configurados XXX');
 
+  // Paso 3: Obtener labels
   const labels = await fetchPlaceholders('placeholders/checkout.json');
   const langDefinitions = {
     default: {
       ...labels,
     },
   };
-  console.log('[checkout.js] 🏷️ Labels cargados:', labels, '***');
+  console.log('[checkout.js] 🌍 Labels cargados XXX');
 
-  // Paso 3: Inicialización del checkout
-  events.on('checkout/initialized', handleCheckoutInitialized, { eager: true });
-
-  // Paso 4: Datos del carrito (shipping y payment methods)
-  events.on('cart/data', handleCartData, { eager: true });
-
+  // Paso 4: Declarar modelo CartModel
   return initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
       CartModel: {
         transformer: (data) => {
-          console.log('[checkout.js] 🔁 Transformando CartModel:', data, '***');
+          console.log('[checkout.js] 🧠 Transformando CartModel:', data, 'XXX');
           return {
             availablePaymentMethods: data?.available_payment_methods,
             selectedPaymentMethod: data?.selected_payment_method,
-            availableShippingMethods: data?.available_shipping_methods,
-            selectedShippingMethod: data?.selected_shipping_method,
+            shippingAddresses: data?.shipping_addresses,
+            selectedShippingMethod: data?.shipping_addresses?.[0]?.selected_shipping_method,
           };
         },
       },
     },
   });
-})();
+});
+
+// Paso 5: Escuchar eventos y loguear
+events.on('checkout/initialized', (data) => {
+  console.log('[checkout.js] ✅ Evento: checkout/initialized', data, 'XXX');
+}, { eager: true });
+
+events.on('cart/data', (data) => {
+  console.log('[checkout.js] 🛒 Evento: cart/data', data, 'XXX');
+
+  console.log('[checkout.js] 💳 Métodos de pago:', data?.available_payment_methods, 'XXX');
+  console.log('[checkout.js] 🚚 Métodos de envío:', data?.shipping_addresses?.[0]?.available_shipping_methods, 'XXX');
+}, { eager: true });
