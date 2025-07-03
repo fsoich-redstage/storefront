@@ -42,9 +42,30 @@ overrideGQLOperations([
             }
           }
         }
+        shipping_addresses {
+          selected_shipping_method {
+            carrier_code
+            method_code
+            carrier_title
+            method_title
+            amount {
+              value
+              currency
+            }
+          }
+          available_shipping_methods {
+            carrier_code
+            method_code
+            carrier_title
+            method_title
+            amount {
+              value
+              currency
+            }
+          }
+        }
       }
       `
     ],
   },
 ]);
-
