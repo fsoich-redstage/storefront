@@ -1,28 +1,27 @@
-import { initializeConfig, getHeaders } from '@dropins/tools/lib/aem/configs.js';
-import { initializers } from '@dropins/tools/initializer.js';
-import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout/api.js';
 import { initializeDropin } from './index.js';
-import { fetchPlaceholders } from '../commerce.js';
-import { events } from '@dropins/tools/event-bus.js';
-import { handleCheckoutInitialized, handleCartData } from '../events.js';
-
-console.log('[INIT] Checkout initializer script loaded');
 
 await initializeDropin(async () => {
   console.log('[INIT] Starting Drop-in initialization...');
 
-  // ✅ Inicializar configuración (antes de getHeaders)
+  // ✅ Se importa acá adentro para asegurar orden
+  const { initializeConfig, getHeaders } = await import('@dropins/tools/lib/aem/configs.js');
   await initializeConfig();
   console.log('[INIT] Drop-in config initialized');
 
-  // ✅ Setear headers GraphQL
+  const { initializers } = await import('@dropins/tools/initializer.js');
+  const { initialize, setFetchGraphQlHeaders } = await import('@dropins/storefront-checkout/api.js');
+  const { fetchPlaceholders } = await import('../commerce.js');
+  const { events } = await import('@dropins/tools/event-bus.js');
+  const { handleCheckoutInitialized, handleCartData } = await import('../events.js');
+
+  // ✅ Headers GraphQL
   setFetchGraphQlHeaders((prev) => {
     const headers = { ...prev, ...getHeaders('checkout') };
     console.log('[INIT] GraphQL headers set:', headers);
     return headers;
   });
 
-  // ✅ Cargar placeholders de idioma
+  // ✅ Cargar placeholders
   const labels = await fetchPlaceholders('placeholders/checkout.json').catch(err => {
     console.error('[INIT] Error loading placeholders:', err);
     return {};
@@ -42,7 +41,7 @@ await initializeDropin(async () => {
   events.on('cart/data', handleCartData, { eager: true });
   console.log('[INIT] Subscribed to cart/data event');
 
-  // ✅ Mount + extender modelo de cart (OOPE)
+  // ✅ Montar drop-in
   const result = initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
@@ -60,4 +59,4 @@ await initializeDropin(async () => {
 
   console.log('[INIT] Checkout drop-in initialized');
   return result;
-})();
+});
