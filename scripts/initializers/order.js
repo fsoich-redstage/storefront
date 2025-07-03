@@ -1,6 +1,5 @@
 import { events } from '@dropins/tools/event-bus.js';
 import { initializers } from '@dropins/tools/initializer.js';
-import { getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-order/api.js';
 import { initializeDropin } from './index.js';
 import {
@@ -31,7 +30,7 @@ await initializeDropin(async () => {
   const orderNumber = searchParams.get('orderNumber');
   const isTokenProvided = orderRef && orderRef.length > 20;
 
-  setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('order') }));
+  setFetchGraphQlHeaders((prev) => ({ ...prev, ...((await import('@dropins/tools/lib/aem/configs.js')).getHeaders('order')) }));
 
   const labels = await fetchPlaceholders('placeholders/order.json');
   const langDefinitions = {

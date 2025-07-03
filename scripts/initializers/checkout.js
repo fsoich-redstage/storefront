@@ -1,3 +1,4 @@
+console.log('[INIT] Drop-in initialized - Fulcrum patch active');
 import { initializeDropin } from './index.js';
 
 await initializeDropin(async () => {
@@ -16,7 +17,7 @@ await initializeDropin(async () => {
   const { handleCheckoutInitialized, handleCartData } = await import('../events.js');
 
   // Paso 3: setear headers (ya tenemos config disponible)
-  const headers = { ...configModule.getHeaders('checkout') };
+  const headers = { ...configModule.((await import('@dropins/tools/lib/aem/configs.js')).getHeaders('checkout')) };
   setFetchGraphQlHeaders(() => {
     console.log('✅ [INIT] GraphQL headers set:', headers);
     return headers;

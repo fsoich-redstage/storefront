@@ -1,4 +1,3 @@
-import { getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { initializers } from '@dropins/tools/initializer.js';
 import { Image, provider as UI } from '@dropins/tools/components.js';
 import {
@@ -47,7 +46,7 @@ await initializeDropin(async () => {
   setEndpoint(await commerceEndpointWithQueryParams());
 
   // Set Fetch Headers (Service)
-  setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('cs') }));
+  setFetchGraphQlHeaders((prev) => ({ ...prev, ...((await import('@dropins/tools/lib/aem/configs.js')).getHeaders('cs')) }));
 
   const sku = getSkuFromUrl();
   const optionsUIDs = getOptionsUIDsFromUrl();

@@ -1,4 +1,3 @@
-import { getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { initializers } from '@dropins/tools/initializer.js';
 import { initialize, setEndpoint, setFetchGraphQlHeaders } from '@dropins/storefront-recommendations/api.js';
 import { initializeDropin } from './index.js';
@@ -8,7 +7,7 @@ await initializeDropin(async () => {
   setEndpoint(await commerceEndpointWithQueryParams());
 
   // Set Fetch Headers (Service)
-  setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('cs') }));
+  setFetchGraphQlHeaders((prev) => ({ ...prev, ...((await import('@dropins/tools/lib/aem/configs.js')).getHeaders('cs')) }));
 
   const labels = await fetchPlaceholders('placeholders/recommendations.json');
   const langDefinitions = {
