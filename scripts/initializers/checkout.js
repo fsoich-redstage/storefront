@@ -3,43 +3,46 @@ import { initializers } from '@dropins/tools/initializer.js';
 import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout/api.js';
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
-import { events } from '@dropins/tools/event-bus.js';
 
-// ✅ LOG DEBUG para confirmar que el archivo está activo
-console.log('[💣 INIT] Drop-in initialized — Fulcrum patch active');
+console.log('🔄 [checkout.js] - Archivo cargado');
 
 await initializeDropin(async () => {
-  // Paso 2: Seteamos headers
-  setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('checkout') }));
+  console.log('⚙️ [checkout.js] - Ejecutando initializeDropin');
 
+  // Set headers
+  const headers = getHeaders('checkout');
+  console.log('📦 [checkout.js] - Headers obtenidos:', headers);
+  setFetchGraphQlHeaders((prev) => ({ ...prev, ...headers }));
+
+  // Fetch labels
   const labels = await fetchPlaceholders('placeholders/checkout.json');
+  console.log('📝 [checkout.js] - Placeholders cargados:', labels);
+
   const langDefinitions = {
     default: {
       ...labels,
     },
   };
 
-  // Paso 3: Extendemos CartModel para OOPE
-  return initializers.mountImmediately(initialize, {
-    langDefinitions,
-    models: {
-      CartModel: {
-        transformer: (data) => {
-          return {
-            availablePaymentMethods: data?.available_payment_methods,
-            selectedPaymentMethod: data?.selected_payment_method,
-          };
-        },
+  console.log('🧩 [checkout.js] - langDefinitions definidos');
+
+  // Montaje del componente + extensión de modelo
+  const models = {
+    CartModel: {
+      transformer: (data) => {
+        console.log('🔄 [checkout.js] - CartModel.transformer ejecutado con:', data);
+        return {
+          availablePaymentMethods: data?.available_payment_methods,
+          selectedPaymentMethod: data?.selected_payment_method,
+        };
       },
     },
+  };
+
+  console.log('🚀 [checkout.js] - Inicializando drop-in con models y langDefinitions');
+
+  return initializers.mountImmediately(initialize, {
+    langDefinitions,
+    models,
   });
-})();
-
-// Paso 4: Eventos para debug en consola
-events.on('checkout/initialized', (data) => {
-  console.log('[🧠 checkout/initialized]', data);
-}, { eager: true });
-
-events.on('cart/data', (cartData) => {
-  console.log('[📦 cart/data]', cartData);
-}, { eager: true });
+});
