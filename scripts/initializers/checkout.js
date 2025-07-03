@@ -1,33 +1,28 @@
 import { initializeDropin } from './index.js';
 
 await initializeDropin(async () => {
-  console.log('[INIT] Starting Drop-in initialization...');
+  console.log('🟢 [CHECKOUT INIT] ⏳ Starting Drop-in initialization...');
 
-  // Configuración del entorno Drop-in
+  // ✅ Paso 1: Inicializar config
   const { initializeConfig, getHeaders } = await import('@dropins/tools/lib/aem/configs.js');
   await initializeConfig();
-  console.log('[INIT] Drop-in config initialized');
+  console.log('✅ [CHECKOUT INIT] ✔ Config initialized');
 
-  // Importación de APIs necesarias
-  const { initializers } = await import('@dropins/tools/initializer.js');
+  // ✅ Paso 2: Setear headers
   const { initialize, setFetchGraphQlHeaders } = await import('@dropins/storefront-checkout/api.js');
-  const { fetchPlaceholders } = await import('../commerce.js');
-  const { events } = await import('@dropins/tools/event-bus.js');
-  const { handleCheckoutInitialized, handleCartData } = await import('../events.js');
-
-  // Configuración de headers GraphQL
   setFetchGraphQlHeaders((prev) => {
     const headers = { ...prev, ...getHeaders('checkout') };
-    console.log('[INIT] GraphQL headers set:', headers);
+    console.log('✅ [CHECKOUT INIT] 📡 GraphQL headers set:', headers);
     return headers;
   });
 
-  // Carga de placeholders
-  const labels = await fetchPlaceholders('placeholders/checkout.json').catch((err) => {
-    console.error('[INIT] Error loading placeholders:', err);
+  // ✅ Paso 3: Cargar placeholders
+  const { fetchPlaceholders } = await import('../commerce.js');
+  const labels = await fetchPlaceholders('placeholders/checkout.json').catch(err => {
+    console.error('❌ [CHECKOUT INIT] 🔥 Error loading placeholders:', err);
     return {};
   });
-  console.log('[INIT] Placeholders loaded:', labels);
+  console.log('✅ [CHECKOUT INIT] 🏷 Placeholders loaded:', labels);
 
   const langDefinitions = {
     default: {
@@ -35,29 +30,35 @@ await initializeDropin(async () => {
     },
   };
 
-  // Suscripción a eventos
+  // ✅ Paso 4: Suscribir eventos
+  const { events } = await import('@dropins/tools/event-bus.js');
+  const { handleCheckoutInitialized, handleCartData } = await import('../events.js');
+
   events.on('checkout/initialized', handleCheckoutInitialized, { eager: true });
-  console.log('[INIT] Subscribed to checkout/initialized event');
+  console.log('✅ [CHECKOUT INIT] 🧩 Subscribed to event: checkout/initialized');
 
   events.on('cart/data', handleCartData, { eager: true });
-  console.log('[INIT] Subscribed to cart/data event');
+  console.log('✅ [CHECKOUT INIT] 🛒 Subscribed to event: cart/data');
 
-  // Montaje del Drop-in con modelos personalizados
+  // ✅ Paso 5: Montar drop-in
+  const { initializers } = await import('@dropins/tools/initializer.js');
   const result = initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
       CartModel: {
         transformer: (data) => {
-          console.log('[INIT] Transforming CartModel data:', data);
+          console.log('🔄 [CHECKOUT INIT] 🔍 Transforming CartModel data:', data);
           return {
-            availablePaymentMethods: data?.available_payment_methods,
-            selectedPaymentMethod: data?.selected_payment_method,
+            availablePaymentMethods: Array.isArray(data?.available_payment_methods)
+              ? data.available_payment_methods
+              : [],
+            selectedPaymentMethod: data?.selected_payment_method || null,
           };
         },
       },
     },
   });
 
-  console.log('[INIT] Checkout drop-in initialized');
+  console.log('✅ [CHECKOUT INIT] 🎉 Checkout Drop-in successfully initialized!');
   return result;
 });
