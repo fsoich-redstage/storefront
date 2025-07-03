@@ -4,34 +4,30 @@ import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 
-console.log('🔄 [checkout.js] - Archivo cargado');
+console.log('🔄 [checkout.js] - Archivo cargado ---');
 
 await initializeDropin(async () => {
   console.log('⚙️ [checkout.js] - Ejecutando initializeDropin');
 
-  // Set headers
   const headers = getHeaders('checkout');
-  console.log('📦 [checkout.js] - Headers obtenidos:', headers);
   setFetchGraphQlHeaders((prev) => ({ ...prev, ...headers }));
+  console.log('📦 [checkout.js] - Headers:', headers);
 
-  // Fetch labels
   const labels = await fetchPlaceholders('placeholders/checkout.json');
-  console.log('📝 [checkout.js] - Placeholders cargados:', labels);
-
   const langDefinitions = {
     default: {
       ...labels,
     },
   };
+  console.log('📝 [checkout.js] - Placeholders:', labels);
 
-  console.log('🧩 [checkout.js] - langDefinitions definidos');
-
-  // Montaje del componente + extensión de modelo
+  // Extensión segura del CartModel
   const models = {
     CartModel: {
       transformer: (data) => {
         console.log('🔄 [checkout.js] - CartModel.transformer ejecutado con:', data);
         return {
+          ...data,
           availablePaymentMethods: data?.available_payment_methods,
           selectedPaymentMethod: data?.selected_payment_method,
         };
@@ -39,10 +35,9 @@ await initializeDropin(async () => {
     },
   };
 
-  console.log('🚀 [checkout.js] - Inicializando drop-in con models y langDefinitions');
-
+  console.log('🚀 [checkout.js] - Montando drop-in');
   return initializers.mountImmediately(initialize, {
     langDefinitions,
     models,
   });
-});
+})();
