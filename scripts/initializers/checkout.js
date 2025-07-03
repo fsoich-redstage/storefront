@@ -11,16 +11,18 @@ console.log('[INIT] Checkout initializer script loaded');
 await initializeDropin(async () => {
   console.log('[INIT] Starting Drop-in initialization...');
 
-  // Inicializar la config de drop-ins (necesario para getHeaders)
+  // ✅ Inicializar configuración (antes de getHeaders)
   await initializeConfig();
   console.log('[INIT] Drop-in config initialized');
 
+  // ✅ Setear headers GraphQL
   setFetchGraphQlHeaders((prev) => {
     const headers = { ...prev, ...getHeaders('checkout') };
     console.log('[INIT] GraphQL headers set:', headers);
     return headers;
   });
 
+  // ✅ Cargar placeholders de idioma
   const labels = await fetchPlaceholders('placeholders/checkout.json').catch(err => {
     console.error('[INIT] Error loading placeholders:', err);
     return {};
@@ -33,13 +35,14 @@ await initializeDropin(async () => {
     },
   };
 
-  // Eventos para recuperar info OOPE y Cart
+  // ✅ Subscribirse a eventos
   events.on('checkout/initialized', handleCheckoutInitialized, { eager: true });
   console.log('[INIT] Subscribed to checkout/initialized event');
 
   events.on('cart/data', handleCartData, { eager: true });
   console.log('[INIT] Subscribed to cart/data event');
 
+  // ✅ Mount + extender modelo de cart (OOPE)
   const result = initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
@@ -56,6 +59,5 @@ await initializeDropin(async () => {
   });
 
   console.log('[INIT] Checkout drop-in initialized');
-
   return result;
 })();
