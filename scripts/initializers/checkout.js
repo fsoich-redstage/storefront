@@ -6,14 +6,14 @@ import { fetchPlaceholders } from '../commerce.js';
 import { events } from '@dropins/tools/event-bus.js';
 
 function handleCheckoutInitialized(data) {
-  console.log('[checkout.js] 🛒 Evento: cart/initialized ZZZ');
-  console.log('[checkout.js] 💳 Métodos de pago:', data?.availablePaymentMethods, 'ZZZ');
-  console.log('[checkout.js] 🚚 Métodos de envío:', data?.shipping_addresses?.[0]?.available_shipping_methods, 'ZZZ');
+  console.log('[checkout.js] 🛒 Evento: cart/initialized AAA');
+  console.log('[checkout.js] 💳 Métodos de pago:', data?.availablePaymentMethods, 'AAA');
+  console.log('[checkout.js] 🚚 Métodos de envío:', data?.shipping_addresses?.[0]?.available_shipping_methods, 'AAA');
 }
 
 function handleCartData(data) {
-  console.log('[checkout.js] 🛒 Evento: cart/data ZZZ');
-  console.log('[checkout.js] 🛍️ CartModel.transformer recibió:', data, 'ZZZ');
+  console.log('[checkout.js] 🛒 Evento: cart/data AAA');
+  console.log('[checkout.js] 🛍️ CartModel.transformer recibió:', data, 'AAA');
 }
 
 events.on('checkout/initialized', handleCheckoutInitialized, { eager: true });
@@ -34,11 +34,16 @@ await initializeDropin(async () => {
     models: {
       CartModel: {
         transformer: (data) => {
-          console.log('[checkout.js] 🛒 CartModel.transformer recibió:', data, 'ZZZ');
+          console.log('[checkout.js] 🛒 CartModel.transformer recibió:', data, 'AAA');
+
+          const shippingAddress = data?.shipping_addresses?.[0] || {};
+
           return {
-            availablePaymentMethods: data?.available_payment_methods,
-            selectedPaymentMethod: data?.selected_payment_method,
-            shippingAddresses: data?.shipping_addresses,
+            availablePaymentMethods: data?.available_payment_methods ?? [],
+            selectedPaymentMethod: data?.selected_payment_method ?? null,
+            availableShippingMethods: shippingAddress.available_shipping_methods ?? [],
+            selectedShippingMethod: shippingAddress.selected_shipping_method ?? null,
+            shippingAddresses: data?.shipping_addresses ?? [],
           };
         },
       },
