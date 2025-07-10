@@ -1,68 +1,69 @@
 import { getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { initializers } from '@dropins/tools/initializer.js';
-import { initialize, setFetchGraphQlHeaders, fetchAvailableShippingMethods, fetchCart } from '@dropins/storefront-checkout/api.js';
+import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout/api.js';
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
-import { events } from '@dropins/tools/lib/events.js';
+import { events } from '@dropins/tools/event-bus.js';
 
-// Prefijo global para logs
-const ggg = (...args) => console.log('🛠️ ggg CHECKOUT:', ...args);
+// Logger con íconos para debug visual
+const log = (...args) => console.log('🧩 [checkout.js]', ...args);
 
+// Init del Drop-in
 await initializeDropin(async () => {
-  ggg('🚀 Iniciando Drop-in Checkout');
+  log('🟢 initializeDropin START');
 
-  // Paso 2: Setear headers para GraphQL
+  // PASO 2: Setear headers GraphQL
   setFetchGraphQlHeaders((prev) => {
-    const headers = { ...prev, ...getHeaders('checkout') };
-    ggg('📡 Seteando headers GraphQL:', headers);
-    return headers;
+    const merged = { ...prev, ...getHeaders('checkout') };
+    log('📬 Headers set for GraphQL:', merged);
+    return merged;
   });
 
-  // Paso 3: Cargar placeholders del archivo
+  // PASO 3: Cargar placeholders
   const labels = await fetchPlaceholders('placeholders/checkout.json');
+  log('📝 Placeholders cargados:', labels);
+
   const langDefinitions = {
     default: {
       ...labels,
     },
   };
-  ggg('🗂️ Placeholders cargados:', langDefinitions);
 
-  // Paso 4: Inicializar checkout con transformación de CartModel
-  ggg('⚙️ Ejecutando mountImmediately');
+  // PASO 4: Mount con CartModel extendido para OOPE
+  log('🔧 Ejecutando mountImmediately con transformador CartModel');
+
   return initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
       CartModel: {
         transformer: (data) => {
-          ggg('🧱 Transformando modelo CartModel:', data);
-          return {
+          log('🛒 CartModel transformer: raw cart data:', data);
+          const result = {
             availablePaymentMethods: data?.available_payment_methods,
             selectedPaymentMethod: data?.selected_payment_method,
+            shippingMethods: data?.shipping_methods,
           };
+          log('🔄 CartModel transform result:', result);
+          return result;
         },
       },
     },
   });
 });
 
-// Evento: checkout iniciado
-events.on('checkout/initialized', async () => {
-  ggg('🏁 Evento: checkout/initialized');
+// Eventos para debug
+events.on('checkout/initialized', (data) => {
+  log('🚀 checkout/initialized:', data);
+}, { eager: true });
 
-  const cart = await fetchCart();
-  ggg('🛒 Carrito actual:', cart);
+events.on('cart/data', (data) => {
+  log('📦 cart/data:', data);
+}, { eager: true });
 
-  const shippingMethods = await fetchAvailableShippingMethods();
-  ggg('🚚 Métodos de envío disponibles:', shippingMethods);
+events.on('checkout/updated', (data) => {
+  log('♻️ checkout/updated:', data);
 });
 
-// Evento: cambio en los valores del formulario
-events.on('checkout/values', async (values) => {
-  ggg('📝 Evento: checkout/values', values);
-
-  if (values?.selectedShippingAddress?.postcode) {
-    ggg('📍 Código postal:', values.selectedShippingAddress.postcode);
-    const updatedShipping = await fetchAvailableShippingMethods();
-    ggg('🔄 Métodos de envío luego del cambio de dirección:', updatedShipping);
-  }
+events.on('order/placed', (order) => {
+  log('✅ order/placed:', order);
 });
