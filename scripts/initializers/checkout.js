@@ -1,13 +1,12 @@
 import { getHeaders } from '@dropins/tools/lib/aem/configs.js';
 import { initializers } from '@dropins/tools/initializer.js';
-import events from '@dropins/tools/lib/events.js';
 import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout/api.js';
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 
 console.log('--- CHECKOUT INIT: Iniciando Drop-in Checkout');
 
-await initializeDropin(async () => {
+await initializeDropin(async ({ events }) => {
   console.log('--- CHECKOUT INIT: Seteando headers de GraphQL');
   setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('checkout') }));
 
@@ -22,7 +21,7 @@ await initializeDropin(async () => {
 
   console.log('--- CHECKOUT INIT: Ejecutando mountImmediately');
 
-  return initializers.mountImmediately(initialize, {
+  const result = initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
       CartModel: {
@@ -38,17 +37,19 @@ await initializeDropin(async () => {
       },
     },
   });
+
+  console.log('--- CHECKOUT INIT: Registrando eventos OOPE');
+
+  events.on('checkout/initialized', (eventData) => {
+    console.log('--- OOPE EVENT: checkout/initialized →', eventData);
+  }, { eager: true });
+
+  events.on('cart/data', (eventData) => {
+    const methods = eventData?.shipping_addresses?.[0]?.available_shipping_methods;
+    console.log('--- OOPE EVENT: cart/data → Shipping Methods:', JSON.stringify(methods, null, 2));
+  }, { eager: true });
+
+  console.log('--- CHECKOUT INIT: Listo y esperando eventos');
+
+  return result;
 });
-
-console.log('--- CHECKOUT INIT: Registrando eventos OOPE');
-
-events.on('checkout/initialized', (eventData) => {
-  console.log('--- OOPE EVENT: checkout/initialized →', eventData);
-}, { eager: true });
-
-events.on('cart/data', (eventData) => {
-  const methods = eventData?.shipping_addresses?.[0]?.available_shipping_methods;
-  console.log('--- OOPE EVENT: cart/data → Shipping Methods:', JSON.stringify(methods, null, 2));
-}, { eager: true });
-
-console.log('--- CHECKOUT INIT: Listo y esperando eventos');
