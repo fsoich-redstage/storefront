@@ -4,7 +4,7 @@ import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 
-// Eventos OOPE simples (sin importar archivos que no existen en EDS)
+// Eventos OOPE simples (sin handler.js que rompe en EDS)
 import events from '@dropins/tools/lib/events.js';
 
 console.log('CHECKOUT INIT: Iniciando Drop-in Checkout');
@@ -33,6 +33,8 @@ await initializeDropin(async () => {
           return {
             availablePaymentMethods: data?.available_payment_methods,
             selectedPaymentMethod: data?.selected_payment_method,
+            availableShippingMethods: data?.available_shipping_methods,
+            selectedShippingMethod: data?.selected_shipping_method,
           };
         },
       },
