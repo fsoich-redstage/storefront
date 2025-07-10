@@ -4,7 +4,7 @@ import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 
-console.log('** CHECKOUT INIT: Iniciando Drop-in Checkout');
+console.log('*/* CHECKOUT INIT: Iniciando Drop-in Checkout');
 
 await initializeDropin(async () => {
   console.log('** CHECKOUT INIT: Seteando headers de GraphQL');
@@ -46,7 +46,8 @@ events.on('checkout/initialized', (eventData) => {
 }, { eager: true });
 
 events.on('cart/data', (eventData) => {
-  console.log('** OOPE EVENT: cart/data →', JSON.stringify(eventData?.shipping_addresses?.[0]?.available_shipping_methods, null, 2));
+  const methods = eventData?.shipping_addresses?.[0]?.available_shipping_methods;
+  console.log('** OOPE EVENT: cart/data → Shipping Methods:', JSON.stringify(methods, null, 2));
 }, { eager: true });
 
 console.log('** CHECKOUT INIT: Listo y esperando eventos');
