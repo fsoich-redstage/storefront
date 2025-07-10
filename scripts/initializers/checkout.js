@@ -5,57 +5,54 @@ import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 import { events } from '@dropins/tools/event-bus.js';
 
-console.log('🧩 [checkout.js] - INIT');
+const ggg = (...args) => console.log('🔧 [checkout.js]', ...args);
 
 await initializeDropin(async () => {
-  console.log('🧩 [checkout.js] - Running initializeDropin');
+  ggg('initializeDropin iniciado ✅');
 
-  // Paso 2: Setear headers
+  // Paso 2: Headers para GraphQL
   setFetchGraphQlHeaders((prev) => {
-    const newHeaders = { ...prev, ...getHeaders('checkout') };
-    console.log('🧩 [checkout.js] - GraphQL Headers:', newHeaders);
-    return newHeaders;
+    const headers = { ...prev, ...getHeaders('checkout') };
+    ggg('Headers GraphQL seteados:', headers);
+    return headers;
   });
 
-  // Paso 3: Fetch traducciones
+  // Paso 3: Cargar placeholders
   const labels = await fetchPlaceholders('placeholders/checkout.json');
   const langDefinitions = {
     default: {
       ...labels,
     },
   };
-  console.log('🧩 [checkout.js] - langDefinitions:', langDefinitions);
+  ggg('Placeholders cargados:', langDefinitions);
 
-  // Paso 4: Extender el modelo CartModel
-  const models = {
-    CartModel: {
-      transformer: (data) => {
-        const result = {
-          availablePaymentMethods: data?.available_payment_methods,
-          selectedPaymentMethod: data?.selected_payment_method,
-        };
-        console.log('🧩 [checkout.js] - CartModel.transformer:', result);
-        return result;
-      },
-    },
-  };
-
-  console.log('🧩 [checkout.js] - Calling mountImmediately...');
+  // Paso 4: Mount con modelo OOPE
   return initializers.mountImmediately(initialize, {
     langDefinitions,
-    models,
+    models: {
+      CartModel: {
+        transformer: (data) => {
+          const res = {
+            availablePaymentMethods: data?.available_payment_methods,
+            selectedPaymentMethod: data?.selected_payment_method,
+          };
+          ggg('CartModel.transformer ejecutado:', res);
+          return res;
+        },
+      },
+    },
   });
 });
 
-// EVENTOS (Paso 4 extra)
+// Eventos extra
 events.on('checkout/initialized', (data) => {
-  console.log('🧩 [checkout.js] - checkout/initialized:', data);
+  ggg('Evento checkout/initialized 🔔', data);
 }, { eager: true });
 
 events.on('cart/data', (data) => {
-  console.log('🧩 [checkout.js] - cart/data:', data);
+  ggg('Evento cart/data 📦', data);
 }, { eager: true });
 
 events.on('order/placed', (data) => {
-  console.log('🧩 [checkout.js] - order/placed:', data);
+  ggg('Evento order/placed 💳', data);
 });
