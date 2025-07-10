@@ -4,13 +4,16 @@ import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 
-console.log('INIT: Empezando initialization del Drop-in Checkout');
+// Eventos OOPE simples (sin importar archivos que no existen en EDS)
+import events from '@dropins/tools/lib/events.js';
+
+console.log('CHECKOUT INIT: Iniciando Drop-in Checkout');
 
 await initializeDropin(async () => {
-  console.log('INIT: Seteando headers de GraphQL');
+  console.log('CHECKOUT INIT: Seteando headers de GraphQL');
   setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('checkout') }));
 
-  console.log('INIT: Cargando placeholders...');
+  console.log('CHECKOUT INIT: Cargando placeholders...');
   const labels = await fetchPlaceholders('placeholders/checkout.json');
 
   const langDefinitions = {
@@ -19,14 +22,14 @@ await initializeDropin(async () => {
     },
   };
 
-  console.log('INIT: Ejecutando initializers.mountImmediately con OOPE models');
+  console.log('CHECKOUT INIT: Ejecutando mountImmediately con CartModel');
 
   return initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
       CartModel: {
         transformer: (data) => {
-          console.log('INIT: Transformando CartModel data:', data);
+          console.log('CHECKOUT DEBUG: CartModel raw data:', JSON.stringify(data, null, 2));
           return {
             availablePaymentMethods: data?.available_payment_methods,
             selectedPaymentMethod: data?.selected_payment_method,
@@ -37,4 +40,15 @@ await initializeDropin(async () => {
   });
 });
 
-console.log('INIT: Checkout initializer listo');
+// ✅ Eventos OOPE activados con logs
+console.log('CHECKOUT INIT: Registrando eventos OOPE');
+
+events.on('checkout/initialized', (eventData) => {
+  console.log('OOPE EVENT: checkout/initialized →', eventData);
+}, { eager: true });
+
+events.on('cart/data', (eventData) => {
+  console.log('OOPE EVENT: cart/data →', eventData);
+}, { eager: true });
+
+console.log('CHECKOUT INIT: Listo y esperando eventos');
