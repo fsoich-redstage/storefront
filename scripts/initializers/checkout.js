@@ -4,13 +4,23 @@ import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 
-console.log('www CHECKOUT INIT: Iniciando Drop-in Checkout');
+let events = null;
+
+try {
+  const imported = await import('@dropins/tools/lib/events.js');
+  events = imported.default;
+  console.log('fff CHECKOUT INIT: events module loaded successfully');
+} catch (e) {
+  console.warn('fff CHECKOUT WARNING: events module not available in EDS (expected)');
+}
+
+console.log('fff CHECKOUT INIT: Iniciando Drop-in Checkout');
 
 await initializeDropin(async () => {
-  console.log('www CHECKOUT INIT: Seteando headers de GraphQL');
+  console.log('fff CHECKOUT INIT: Seteando headers de GraphQL');
   setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('checkout') }));
 
-  console.log('www CHECKOUT INIT: Cargando placeholders...');
+  console.log('fff CHECKOUT INIT: Cargando placeholders...');
   const labels = await fetchPlaceholders('placeholders/checkout.json');
 
   const langDefinitions = {
@@ -19,36 +29,51 @@ await initializeDropin(async () => {
     },
   };
 
-  console.log('www CHECKOUT INIT: Ejecutando mountImmediately');
+  console.log('fff CHECKOUT INIT: Ejecutando mountImmediately');
 
   const result = initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
       CartModel: {
         transformer: (data) => {
-          console.log('www CHECKOUT DEBUG: CartModel raw data:', JSON.stringify(data, null, 2));
+          console.log('fff CHECKOUT DEBUG: CartModel raw data:', JSON.stringify(data, null, 2));
+
+          const shippingAddresses = Array.isArray(data?.shipping_addresses)
+            ? data.shipping_addresses
+            : [];
+
           return {
-            availablePaymentMethods: data?.available_payment_methods,
-            selectedPaymentMethod: data?.selected_payment_method,
-            availableShippingMethods: data?.shipping_addresses?.[0]?.available_shipping_methods,
-            selectedShippingMethod: data?.shipping_addresses?.[0]?.selected_shipping_method,
+            availablePaymentMethods: data?.available_payment_methods || [],
+            selectedPaymentMethod: data?.selected_payment_method || null,
+            availableShippingMethods: shippingAddresses[0]?.available_shipping_methods || [],
+            selectedShippingMethod: shippingAddresses[0]?.selected_shipping_method || null,
           };
         },
       },
     },
   });
 
-  // Fallback: escuchamos eventos globales desde window
-  if (typeof window !== 'undefined' && window.addEventListener) {
-    console.log('www CHECKOUT INIT: Registrando eventos globales via window');
+  if (events) {
+    console.log('fff CHECKOUT INIT: Registrando eventos OOPE via events.js');
+
+    events.on('checkout/initialized', (payload) => {
+      console.log('fff OOPE EVENT: checkout/initialized →', payload);
+    }, { eager: true });
+
+    events.on('cart/data', (payload) => {
+      console.log('fff OOPE EVENT: cart/data →', payload);
+    }, { eager: true });
+  }
+
+  if (typeof window !== 'undefined') {
+    console.log('fff CHECKOUT INIT: Registrando eventos globales via window');
 
     window.addEventListener('message', (e) => {
       if (!e?.data?.type?.startsWith('checkout/')) return;
-
-      console.log(`www GLOBAL EVENT: ${e.data.type} →`, e.data?.payload);
+      console.log(`fff GLOBAL EVENT: ${e.data.type} →`, e.data?.payload);
     });
   }
 
-  console.log('www CHECKOUT INIT: Listo y esperando eventos (global fallback)');
+  console.log('fff CHECKOUT INIT: Listo y esperando eventos');
   return result;
 });
