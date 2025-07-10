@@ -3,8 +3,6 @@ import { initializers } from '@dropins/tools/initializer.js';
 import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout/api.js';
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
-
-// Eventos OOPE simples (sin handler.js que rompe en EDS)
 import events from '@dropins/tools/lib/events.js';
 
 console.log('CHECKOUT INIT: Iniciando Drop-in Checkout');
@@ -33,8 +31,8 @@ await initializeDropin(async () => {
           return {
             availablePaymentMethods: data?.available_payment_methods,
             selectedPaymentMethod: data?.selected_payment_method,
-            availableShippingMethods: data?.available_shipping_methods,
-            selectedShippingMethod: data?.selected_shipping_method,
+            availableShippingMethods: data?.shipping_addresses?.[0]?.available_shipping_methods,
+            selectedShippingMethod: data?.shipping_addresses?.[0]?.selected_shipping_method,
           };
         },
       },
@@ -42,7 +40,6 @@ await initializeDropin(async () => {
   });
 });
 
-// ✅ Eventos OOPE activados con logs
 console.log('CHECKOUT INIT: Registrando eventos OOPE');
 
 events.on('checkout/initialized', (eventData) => {
@@ -50,7 +47,7 @@ events.on('checkout/initialized', (eventData) => {
 }, { eager: true });
 
 events.on('cart/data', (eventData) => {
-  console.log('OOPE EVENT: cart/data →', eventData);
+  console.log('OOPE EVENT: cart/data →', JSON.stringify(eventData?.shipping_addresses?.[0]?.available_shipping_methods, null, 2));
 }, { eager: true });
 
 console.log('CHECKOUT INIT: Listo y esperando eventos');
