@@ -5,65 +5,57 @@ import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
 import { events } from '@dropins/tools/event-bus.js';
 
-// Logger con íconos para debug visual
-const log = (...args) => console.log('🧩 [checkout.js]', ...args);
+console.log('🧩 [checkout.js] - INIT');
 
-// Init del Drop-in
 await initializeDropin(async () => {
-  log('🟢 initializeDropin START');
+  console.log('🧩 [checkout.js] - Running initializeDropin');
 
-  // PASO 2: Setear headers GraphQL
+  // Paso 2: Setear headers
   setFetchGraphQlHeaders((prev) => {
-    const merged = { ...prev, ...getHeaders('checkout') };
-    log('📬 Headers set for GraphQL:', merged);
-    return merged;
+    const newHeaders = { ...prev, ...getHeaders('checkout') };
+    console.log('🧩 [checkout.js] - GraphQL Headers:', newHeaders);
+    return newHeaders;
   });
 
-  // PASO 3: Cargar placeholders
+  // Paso 3: Fetch traducciones
   const labels = await fetchPlaceholders('placeholders/checkout.json');
-  log('📝 Placeholders cargados:', labels);
-
   const langDefinitions = {
     default: {
       ...labels,
     },
   };
+  console.log('🧩 [checkout.js] - langDefinitions:', langDefinitions);
 
-  // PASO 4: Mount con CartModel extendido para OOPE
-  log('🔧 Ejecutando mountImmediately con transformador CartModel');
-
-  return initializers.mountImmediately(initialize, {
-    langDefinitions,
-    models: {
-      CartModel: {
-        transformer: (data) => {
-          log('🛒 CartModel transformer: raw cart data:', data);
-          const result = {
-            availablePaymentMethods: data?.available_payment_methods,
-            selectedPaymentMethod: data?.selected_payment_method,
-            shippingMethods: data?.shipping_methods,
-          };
-          log('🔄 CartModel transform result:', result);
-          return result;
-        },
+  // Paso 4: Extender el modelo CartModel
+  const models = {
+    CartModel: {
+      transformer: (data) => {
+        const result = {
+          availablePaymentMethods: data?.available_payment_methods,
+          selectedPaymentMethod: data?.selected_payment_method,
+        };
+        console.log('🧩 [checkout.js] - CartModel.transformer:', result);
+        return result;
       },
     },
+  };
+
+  console.log('🧩 [checkout.js] - Calling mountImmediately...');
+  return initializers.mountImmediately(initialize, {
+    langDefinitions,
+    models,
   });
 });
 
-// Eventos para debug
+// EVENTOS (Paso 4 extra)
 events.on('checkout/initialized', (data) => {
-  log('🚀 checkout/initialized:', data);
+  console.log('🧩 [checkout.js] - checkout/initialized:', data);
 }, { eager: true });
 
 events.on('cart/data', (data) => {
-  log('📦 cart/data:', data);
+  console.log('🧩 [checkout.js] - cart/data:', data);
 }, { eager: true });
 
-events.on('checkout/updated', (data) => {
-  log('♻️ checkout/updated:', data);
-});
-
-events.on('order/placed', (order) => {
-  log('✅ order/placed:', order);
+events.on('order/placed', (data) => {
+  console.log('🧩 [checkout.js] - order/placed:', data);
 });
