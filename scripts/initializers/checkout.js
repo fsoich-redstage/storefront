@@ -1,17 +1,16 @@
 import { getHeaders } from '@dropins/tools/lib/aem/configs.js';
-import { initializers } from '@dropins/tools/initializer.js';
+import { initializers, events } from '@dropins/tools/initializer.js';
 import { initialize, setFetchGraphQlHeaders } from '@dropins/storefront-checkout/api.js';
 import { initializeDropin } from './index.js';
 import { fetchPlaceholders } from '../commerce.js';
-import events from '@dropins/tools/lib/events.js';
 
-console.log('CHECKOUT INIT: Iniciando Drop-in Checkout');
+console.log('** CHECKOUT INIT: Iniciando Drop-in Checkout');
 
 await initializeDropin(async () => {
-  console.log('CHECKOUT INIT: Seteando headers de GraphQL');
+  console.log('** CHECKOUT INIT: Seteando headers de GraphQL');
   setFetchGraphQlHeaders((prev) => ({ ...prev, ...getHeaders('checkout') }));
 
-  console.log('CHECKOUT INIT: Cargando placeholders...');
+  console.log('** CHECKOUT INIT: Cargando placeholders...');
   const labels = await fetchPlaceholders('placeholders/checkout.json');
 
   const langDefinitions = {
@@ -20,14 +19,14 @@ await initializeDropin(async () => {
     },
   };
 
-  console.log('CHECKOUT INIT: Ejecutando mountImmediately con CartModel');
+  console.log('** CHECKOUT INIT: Ejecutando mountImmediately con CartModel');
 
   return initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
       CartModel: {
         transformer: (data) => {
-          console.log('CHECKOUT DEBUG: CartModel raw data:', JSON.stringify(data, null, 2));
+          console.log('** CHECKOUT DEBUG: CartModel raw data:', JSON.stringify(data, null, 2));
           return {
             availablePaymentMethods: data?.available_payment_methods,
             selectedPaymentMethod: data?.selected_payment_method,
@@ -40,14 +39,14 @@ await initializeDropin(async () => {
   });
 });
 
-console.log('CHECKOUT INIT: Registrando eventos OOPE');
+console.log('** CHECKOUT INIT: Registrando eventos OOPE');
 
 events.on('checkout/initialized', (eventData) => {
-  console.log('OOPE EVENT: checkout/initialized →', eventData);
+  console.log('** OOPE EVENT: checkout/initialized →', eventData);
 }, { eager: true });
 
 events.on('cart/data', (eventData) => {
-  console.log('OOPE EVENT: cart/data →', JSON.stringify(eventData?.shipping_addresses?.[0]?.available_shipping_methods, null, 2));
+  console.log('** OOPE EVENT: cart/data →', JSON.stringify(eventData?.shipping_addresses?.[0]?.available_shipping_methods, null, 2));
 }, { eager: true });
 
-console.log('CHECKOUT INIT: Listo y esperando eventos');
+console.log('** CHECKOUT INIT: Listo y esperando eventos');
