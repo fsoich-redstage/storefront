@@ -19,15 +19,18 @@ await initializeDropin(async () => {
   return initializers.mountImmediately(initialize, {
     langDefinitions,
     models: {
-      CartModel: {
-        transformer: (data) => ({
-          availablePaymentMethods: data?.available_payment_methods,
-          selectedPaymentMethod: data?.selected_payment_method,
-          availableShippingMethods: data?.available_shipping_methods,
-          selectedShippingMethod: data?.selected_shipping_method,
-        }),
-      },
-    },
+  CartModel: {
+    transformer: (data) => ({
+      availablePaymentMethods: data?.available_payment_methods,
+      selectedPaymentMethod: data?.selected_payment_method,
+      availableShippingMethods: (data?.available_shipping_methods || []).filter(
+        (method) => method?.method_title !== 'FD'
+      ),
+      selectedShippingMethod: data?.selected_shipping_method,
+    }),
+  },
+},
+
   });
 })();
 
